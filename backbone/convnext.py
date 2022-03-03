@@ -4,8 +4,6 @@
 
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
-
-
 from functools import partial
 
 import torch
@@ -16,6 +14,26 @@ from timm.models.layers import trunc_normal_, DropPath
 from mmcv_custom import load_checkpoint
 from mmseg.utils import get_root_logger
 from mmseg.models.builder import BACKBONES
+
+import torchvision.transforms as T
+from PIL import Image
+import requests
+
+# We will verify our results on an image of cute cats
+def prepare_img():
+    url = "http://images.cocodataset.org/val2017/000000039769.jpg"
+    im = Image.open(requests.get(url, stream=True).raw)
+
+    transforms = T.Compose([T.Resize((512, 512)),
+            T.ToTensor(),
+            T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),]
+    )
+
+    im = transforms(im).unsqueeze(0) # batch size 1
+
+    return im
+
+pixel_values = prepare_img()
 
 class Block(nn.Module):
     r""" ConvNeXt Block. There are two equivalent implementations:
@@ -139,6 +157,9 @@ class ConvNeXt(nn.Module):
             raise TypeError('pretrained must be a str or None')
 
     def forward_features(self, x):
+        # hack: just use the cats image we prepared
+        x = pixel_values.to(x.device)
+        
         outs = []
         for i in range(4):
             x = self.downsample_layers[i](x)
