@@ -159,6 +159,7 @@ class ConvNeXt(nn.Module):
     def forward_features(self, x):
         # hack: just use the cats image we prepared
         x = pixel_values.to(x.device)
+        print(f"Input image shape: {x.shape}")
         
         outs = []
         for i in range(4):
