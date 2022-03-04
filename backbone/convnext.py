@@ -174,6 +174,7 @@ class ConvNeXt(nn.Module):
 
     def forward(self, x):
         x = self.forward_features(x)
+        print(x)
         return x
 
 class LayerNorm(nn.Module):
