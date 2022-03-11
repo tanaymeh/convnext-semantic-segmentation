@@ -19,22 +19,6 @@ import torchvision.transforms as T
 from PIL import Image
 import requests
 
-# We will verify our results on an image of cute cats
-def prepare_img():
-    url = "http://images.cocodataset.org/val2017/000000039769.jpg"
-    im = Image.open(requests.get(url, stream=True).raw)
-
-    transforms = T.Compose([T.Resize((512, 512)),
-            T.ToTensor(),
-            T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),]
-    )
-
-    im = transforms(im).unsqueeze(0) # batch size 1
-
-    return im
-
-pixel_values = prepare_img()
-
 class Block(nn.Module):
     r""" ConvNeXt Block. There are two equivalent implementations:
     (1) DwConv -> LayerNorm (channels_first) -> 1x1 Conv -> GELU -> 1x1 Conv; all in (N, C, H, W)
@@ -157,10 +141,6 @@ class ConvNeXt(nn.Module):
             raise TypeError('pretrained must be a str or None')
 
     def forward_features(self, x):
-        # hack: just use the cats image we prepared
-        x = pixel_values.to(x.device)
-        print(f"Input image shape: {x.shape}")
-        
         outs = []
         for i in range(4):
             x = self.downsample_layers[i](x)
@@ -169,7 +149,9 @@ class ConvNeXt(nn.Module):
                 norm_layer = getattr(self, f'norm{i}')
                 x_out = norm_layer(x)
                 outs.append(x_out)
-
+        print(len(outs))
+        for i in outs:
+            print(i.shape)
         return tuple(outs)
 
     def forward(self, x):
